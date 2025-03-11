@@ -4,20 +4,216 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Campus Navigation System</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-    <link rel="stylesheet" href="style.css">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Times New Roman', serif;
+            background: #8cc1f6;
+        }
+
+        #map {
+            height: 100vh;
+        }
+
+        /* Welcome Screen */
+        #welcome {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: #f4f3f3; /* Soft peach color */
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            color: rgb(6, 6, 6);
+            font-size: 2rem; font-weight: bold;
+            font-family: 'Times New Roman', serif;
+            z-index: 2000;
+            text-align: center;
+            animation: fadeOut 3s forwards 3s;
+        }
+
+        /* Icons */
+        #welcome-icons {
+            font-size: 3rem;
+            margin-top: 10px;
+            animation: fadeIn 2s infinite alternate;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0.5; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeOut {
+            100% { opacity: 0; visibility: hidden; }
+        }
+
+        /* Sidebar */
+        #menu {
+            position: absolute;
+            top: 50px; left: 10px;
+            background: rgba(241, 226, 226, 0.95);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 2px 2px 15px rgba(50, 48, 48, 0.2);
+            z-index: 1000;
+            width: 270px;
+            font-family: 'Times New Roman', serif;
+        }
+
+        h3 {
+            margin: 0;
+            text-align: center;
+            color: #343a40;
+            font-size: 1.3rem;
+            font-family: 'Times New Roman', serif;
+        }
+
+        select, button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: 'Times New Roman', serif;
+        }
+
+        select {
+            background: #e9ecef;
+        }
+
+        button {
+            background: #28a745;
+            color: white;
+            cursor: pointer;
+            transition: 0.3s;
+            font-weight: bold;
+            font-family: 'Times New Roman', serif;
+        }
+
+        button:hover {
+            background: #218838;
+        }
+
+    </style>
 </head>
 <body>
-    <!-- Leaflet Routing Machine -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
-<script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
-    <h2>Campus Navigation System</h2>
-    <p>Enter the department name to find the way:</p>
-    <input type="text" id="searchbox" placeholder="Enter Department Name">
-    <button id="searchbutton">Search</button>
+
+    <!-- Welcome Screen -->
+    <div id="welcome">
+        <strong>Campus Navigation System - NASC</strong> 
+        <div id="welcome-icons"></div>
+    </div>
+
+    <!-- Menu for selecting destination -->
+    <div id="menu">
+        <h3>Select Destination</h3>
+        <select id="destination">
+            <option value="">-- Select --</option>
+            <option value="10.870251,76.928998">Commerce</option>
+            <option value="10.8701005,76.9283915">BCA</option>
+            <option value="10.8702351,76.9284039">Fashion Design</option>
+            <option value="10.8697482,76.9285290">CSDS</option>
+            <option value="10.8697482,76.9285290">CS</option>
+            <option value="10.8698206,76.9284901">IT Department</option>
+            <option value="10.8702124,76.9283412">AIML&IOT</option>
+            <option value="10.8699493,76.9284502">Library</option>
+            <option value="10.8709127,76.9286999">B Block</option>
+            <option value="10.8709361,76.9287462">PK DAS Auditorium</option>
+            <option value="10.8707073,76.9292052">C Block</option>
+            <option value="10.8702549,76.9289256">D Block</option>
+            <option value="10.8701515,76.9289923">Cash Counter</option>
+            <option value="10.8705855,76.9289306">Restroom</option>
+            <option value="10.8706533,76.9288284">Biotechnology</option>
+            <option value="10.8706661,76.9286074">Hotel Management</option>
+            <option value="10.8703072,76.9285018">A Block</option>
+            <option value="10.8702549,76.9289256">Viscom</option>
+            <option value="10.8702549,76.9289256">Basketball Court</option>
+            <option value="10.8702549,76.9289256">Hotel Management</option>
+            <option value="10.8702549,76.9289256">Biotechnology</option>
+            <option value="10.8702549,76.9289256">Criminology</option>
+            <option value="10.8702549,76.9289256">NCPIR</option>
+
+        </select>
+        <button onclick="navigate()">Get Route</button>
+    </div>
+
+    <!-- Map Container -->
     <div id="map"></div>
 
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-    <script src="script.js"></script>
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <!-- Leaflet Routing Machine -->
+    <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+
+    <script>
+        // Initialize the map
+        var map = L.map('map').setView([10.8706981, 76.9285933], 17);  // Default view
+
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Add markers for departments
+        var locations = {
+            "Commerce": [10.870251, 76.928998],
+            "BCA": [10.8701005, 76.9283915],
+            "Fashion Design": [10.8702351, 76.9284039],
+            "CSDS": [10.8697482, 76.9285290],
+            "CS": [10.8697482, 76.9285290],
+            "IT Department": [10.8698206, 76.9284901],
+            "AIML": [10.8702124, 76.9283412],
+            "Library": [10.8699493, 76.9284502],
+            "B Block": [10.8709127, 76.9286999],
+            "PK DAS Auditorium": [10.8709361, 76.9287462],
+            "C Block": [10.8707073, 76.9292052],
+            "D Block": [10.8702549, 76.9289256],
+            "Cash Counter": [10.8701515, 76.9289923],
+            "Restroom": [10.8705855, 76.9289306],
+            "Viscom": [10.87018996607278, 76.92879445457345],
+            "Basketball Court": [10.871119795565662, 76.92789591457124],
+            "NCPIR": [10.87007143234795, 76.92776716853403],
+            "Criminology": [10.870100407271744, 76.92868984842394],
+            "Biotechnology": [10.8706533, 76.9288284],
+            "Hotel Management": [10.8706661, 76.9286074],
+            "A Block": [10.8703072, 76.9285018]
+        };
+
+        for (let place in locations) {
+            L.marker(locations[place]).addTo(map).bindPopup(place);
+        }
+
+        var userMarker;
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                var userLat = position.coords.latitude;
+                var userLng = position.coords.longitude;
+                userMarker = L.marker([userLat, userLng], { draggable: true })
+                    .addTo(map)
+                    .bindPopup("You are here").openPopup();
+                map.setView([userLat, userLng], 17);
+            });
+        }
+
+        var routingControl;
+
+        function navigate() {
+            var destValue = document.getElementById("destination").value;
+            if (!destValue) { alert("Please select a destination!"); return; }
+            var [destLat, destLng] = destValue.split(",").map(Number);
+            if (routingControl) map.removeControl(routingControl);
+            routingControl = L.Routing.control({
+                waypoints: [userMarker.getLatLng(), L.latLng(destLat, destLng)],
+                routeWhileDragging: true
+            }).addTo(map);
+        }
+    </script>
+
 </body>
 </html>
